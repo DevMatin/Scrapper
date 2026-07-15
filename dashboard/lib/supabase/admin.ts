@@ -1,5 +1,5 @@
 import type { AdminAuditRow, SeoAudit } from "../types";
-import { createAuthClient, createServiceClient } from "./server";
+import { createServiceClient } from "./server";
 
 export async function getAuditByToken(token: string): Promise<SeoAudit | null> {
   const supabase = createServiceClient();
@@ -15,7 +15,7 @@ export async function getAuditByToken(token: string): Promise<SeoAudit | null> {
 }
 
 export async function getAdminAudits(): Promise<AdminAuditRow[]> {
-  const supabase = await createAuthClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("seo_audits")
     .select("id, lead_id, url, scanned_at, health_score, share_token, published_at, leads(name, ort, branche)")
@@ -41,7 +41,7 @@ export async function getAdminAudits(): Promise<AdminAuditRow[]> {
 }
 
 export async function publishAudit(auditId: string): Promise<string> {
-  const supabase = await createAuthClient();
+  const supabase = createServiceClient();
   const token = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 
   const { data, error } = await supabase

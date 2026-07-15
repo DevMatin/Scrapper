@@ -5,11 +5,14 @@ Next.js Dashboard für Website-Health-Reports. Liest Audits aus Supabase, zeigt 
 ## Lokal starten
 
 ```bash
+cd dashboard
 cp .env.local.example .env.local
-# SUPABASE_SERVICE_ROLE_KEY aus Supabase Dashboard → Settings → API
+# Werte aus Supabase Dashboard → Settings → API eintragen
 npm install
 npm run dev
 ```
+
+**Wichtig:** Login-Daten (`ADMIN_EMAIL`, `ADMIN_PASSWORD`) müssen in `dashboard/.env.local` stehen — die Root-`.env` des Scrapers wird **nicht** gelesen.
 
 Öffne `http://localhost:3000/admin` (Login erforderlich).
 
@@ -19,9 +22,13 @@ npm run dev
 2. Environment Variables setzen:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (nur Server, nicht `NEXT_PUBLIC_`)
-   - `ADMIN_EMAIL` (optional)
+   - `SUPABASE_SERVICE_ROLE_KEY` (nur Server)
+   - `ADMIN_EMAIL` + `ADMIN_PASSWORD` (Login)
 3. Deploy
+
+## Login
+
+Einfacher E-Mail/Passwort-Login über `ADMIN_EMAIL` und `ADMIN_PASSWORD` in `.env.local` — kein Supabase Auth nötig.
 
 ## Workflow
 
@@ -31,7 +38,7 @@ npm run dev
 
 ## Supabase Auth
 
-Admin-Login benötigt einen User in Supabase Auth (Dashboard → Authentication → Users).
+Nicht mehr nötig. Login läuft über `ADMIN_EMAIL` + `ADMIN_PASSWORD`.
 
 ## Sicherheit
 
