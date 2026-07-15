@@ -97,6 +97,13 @@ export interface AdminAuditRow {
   url: string;
   scanned_at: string;
   health_score: number | null;
+  on_page_score: number | null;
+  content_score: number | null;
+  technical_score: number | null;
+  schema_score: number | null;
+  images_score: number | null;
+  issues: Issue[];
+  llm_analysis: LlmAnalysis | null;
   share_token: string | null;
   published_at: string | null;
   lead_name: string | null;

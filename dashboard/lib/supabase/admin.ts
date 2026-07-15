@@ -14,11 +14,25 @@ export async function getAuditByToken(token: string): Promise<SeoAudit | null> {
   return data as SeoAudit;
 }
 
+export async function getAuditById(id: string): Promise<SeoAudit | null> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("seo_audits")
+    .select("*, leads(name, website, ort, branche)")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return null;
+  return data as SeoAudit;
+}
+
 export async function getAdminAudits(): Promise<AdminAuditRow[]> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("seo_audits")
-    .select("id, lead_id, url, scanned_at, health_score, share_token, published_at, leads(name, ort, branche)")
+    .select(
+      "id, lead_id, url, scanned_at, health_score, on_page_score, content_score, technical_score, schema_score, images_score, issues, llm_analysis, share_token, published_at, leads(name, ort, branche)",
+    )
     .order("scanned_at", { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -31,6 +45,13 @@ export async function getAdminAudits(): Promise<AdminAuditRow[]> {
       url: row.url,
       scanned_at: row.scanned_at,
       health_score: row.health_score,
+      on_page_score: row.on_page_score,
+      content_score: row.content_score,
+      technical_score: row.technical_score,
+      schema_score: row.schema_score,
+      images_score: row.images_score,
+      issues: row.issues ?? [],
+      llm_analysis: row.llm_analysis,
       share_token: row.share_token,
       published_at: row.published_at,
       lead_name: lead?.name ?? null,

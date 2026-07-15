@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import type { AdminAuditRow } from "@/lib/types";
 import { formatDate, scoreColor } from "@/lib/scores";
 import { publishAuditAction } from "@/app/admin/actions";
+import { AdminAuditDetail } from "@/components/AdminAuditDetail";
 
 interface AdminAuditTableProps {
   audits: AdminAuditRow[];
@@ -11,6 +12,7 @@ interface AdminAuditTableProps {
 
 export function AdminAuditTable({ audits }: AdminAuditTableProps) {
   const [rows, setRows] = useState(audits);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [ortFilter, setOrtFilter] = useState("");
   const [brancheFilter, setBrancheFilter] = useState("");
   const [minScore, setMinScore] = useState("");
@@ -32,6 +34,10 @@ export function AdminAuditTable({ audits }: AdminAuditTableProps) {
 
   function reportUrl(token: string) {
     return `${window.location.origin}/report/${token}`;
+  }
+
+  function toggleRow(id: string) {
+    setOpenId((prev) => (prev === id ? null : id));
   }
 
   function handlePublish(id: string) {
@@ -79,72 +85,61 @@ export function AdminAuditTable({ audits }: AdminAuditTableProps) {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-600">
-            <tr>
-              <th className="px-4 py-3 font-medium">Firma</th>
-              <th className="px-4 py-3 font-medium">Ort</th>
-              <th className="px-4 py-3 font-medium">Score</th>
-              <th className="px-4 py-3 font-medium">Datum</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50/50">
-                <td className="px-4 py-3">
+      <div className="space-y-3">
+        {filtered.map((row) => {
+          const isOpen = openId === row.id;
+          return (
+            <div
+              key={row.id}
+              className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+            >
+              <button
+                type="button"
+                onClick={() => toggleRow(row.id)}
+                className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-slate-50/80"
+              >
+                <span className="text-slate-400">{isOpen ? "▾" : "▸"}</span>
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-slate-800">{row.lead_name ?? "–"}</p>
-                  <p className="text-xs text-slate-500 truncate max-w-[200px]">{row.url}</p>
-                </td>
-                <td className="px-4 py-3 text-slate-600">{row.lead_ort ?? "–"}</td>
-                <td className={`px-4 py-3 font-semibold ${scoreColor(row.health_score)}`}>
+                  <p className="truncate text-xs text-slate-500">{row.url}</p>
+                </div>
+                <div className="hidden text-sm text-slate-500 sm:block">{row.lead_ort ?? "–"}</div>
+                <div className={`text-lg font-bold ${scoreColor(row.health_score)}`}>
                   {row.health_score ?? "–"}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{formatDate(row.scanned_at)}</td>
-                <td className="px-4 py-3">
-                  {row.share_token ? (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                      Veröffentlicht
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                      Entwurf
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    {!row.share_token && (
-                      <button
-                        type="button"
-                        disabled={pending}
-                        onClick={() => handlePublish(row.id)}
-                        className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-                      >
-                        Veröffentlichen
-                      </button>
-                    )}
-                    {row.share_token && (
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(row.share_token!)}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                      >
-                        {copied === row.share_token ? "Kopiert!" : "Link kopieren"}
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!filtered.length && (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">Keine Audits gefunden.</p>
-        )}
+                </div>
+                <div className="hidden text-sm text-slate-500 md:block">
+                  {formatDate(row.scanned_at)}
+                </div>
+                {row.share_token ? (
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    Live
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                    Entwurf
+                  </span>
+                )}
+              </button>
+
+              {isOpen && (
+                <AdminAuditDetail
+                  row={row}
+                  pending={pending}
+                  copied={copied === row.share_token}
+                  onPublish={() => handlePublish(row.id)}
+                  onCopy={() => row.share_token && handleCopy(row.share_token)}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {!filtered.length && (
+        <p className="rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+          Keine Audits gefunden.
+        </p>
+      )}
     </div>
   );
 }
