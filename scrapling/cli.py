@@ -11,7 +11,7 @@ from scrapling.core._types import List, Optional, Dict, Tuple, Any, Callable
 from orjson import loads as json_loads, JSONDecodeError
 
 try:
-    from click import command, option, Choice, group, argument, version_option
+    from click import command, option, Choice, group, argument, version_option, ClickException
 except (ImportError, ModuleNotFoundError) as e:
     raise ModuleNotFoundError(
         "You need to install scrapling with any of the extras to enable Shell commands. See: https://scrapling.readthedocs.io/en/latest/#installation"
@@ -654,6 +654,20 @@ def stealthy_fetch(
 @version_option(version=__version__, prog_name="Scrapling")
 def main():
     pass
+
+
+try:
+    from scrapling.integrations.claude_seo.cli import seo as seo_group
+
+    main.add_command(seo_group)
+except ImportError:  # pragma: no cover
+    @command(name="seo", help="Claude SEO integration (requires scrapling[seo])")
+    def seo_missing():
+        raise ClickException(
+            "SEO integration requires optional dependencies. Install with: pip install 'scrapling[seo]'"
+        )
+
+    main.add_command(seo_missing)
 
 
 # Adding commands

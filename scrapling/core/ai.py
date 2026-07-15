@@ -904,4 +904,59 @@ class ScraplingMCPServer:
         )
         # Screenshot tool (returns image + url content blocks, not structured JSON)
         server.add_tool(self.screenshot, title="screenshot", description=self.screenshot.__doc__)
+        self._register_seo_tools(server)
         server.run(transport="stdio" if not http else "streamable-http")
+
+    def _register_seo_tools(self, server: FastMCP) -> None:
+        try:
+            from scrapling.integrations.claude_seo import mcp_tools as seo
+        except ImportError:
+            return
+
+        server.add_tool(
+            lambda url, include_pagespeed=True: seo.seo_page_scan(url, include_pagespeed=include_pagespeed),
+            title="seo_page_scan",
+            structured_output=True,
+        )
+        server.add_tool(
+            seo.seo_content_score,
+            title="seo_content_score",
+            structured_output=True,
+        )
+        server.add_tool(
+            seo.seo_parse,
+            title="seo_parse",
+            structured_output=True,
+        )
+        server.add_tool(
+            seo.seo_schema,
+            title="seo_schema",
+            structured_output=True,
+        )
+        server.add_tool(
+            seo.seo_pagespeed,
+            title="seo_pagespeed",
+            structured_output=True,
+        )
+        server.add_tool(
+            lambda url, output_dir="./audit", max_pages=50: seo.seo_audit(
+                url, output_dir=output_dir, max_pages=max_pages
+            ),
+            title="seo_audit",
+            structured_output=True,
+        )
+        server.add_tool(
+            lambda limit=20, llm=False: seo.seo_leads_scan(limit=limit, llm=llm),
+            title="seo_leads_scan",
+            structured_output=True,
+        )
+        server.add_tool(
+            lambda url: seo.seo_llm_enrich(url),
+            title="seo_llm_enrich",
+            structured_output=True,
+        )
+        server.add_tool(
+            lambda query, limit=10, llm=True: seo.seo_pipeline(query, limit=limit, llm=llm),
+            title="seo_pipeline",
+            structured_output=True,
+        )

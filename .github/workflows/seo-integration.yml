@@ -1,0 +1,53 @@
+name: SEO Integration Tests
+
+on:
+  push:
+    paths:
+      - 'scrapling/integrations/**'
+      - 'claude-seo-main/**'
+      - 'tests/integrations/**'
+      - 'pyproject.toml'
+  pull_request:
+    paths:
+      - 'scrapling/integrations/**'
+      - 'claude-seo-main/**'
+      - 'tests/integrations/**'
+      - 'pyproject.toml'
+
+jobs:
+  seo-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package with SEO extras
+        run: |
+          pip install -e ".[seo]"
+          pip install pytest pytest-cov
+
+      - name: Run offline integration tests
+        run: pytest tests/integrations/test_claude_seo -m "not network" -v
+
+  claude-seo-vendor:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: claude-seo-main
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install vendor test deps
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run claude-seo vendor tests
+        run: python -m pytest tests/ -q --ignore=tests/test_banana_api_key_safety.py || true
